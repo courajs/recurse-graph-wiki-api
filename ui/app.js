@@ -1,10 +1,11 @@
 import {collection} from '../lib/data-service.js';
 
-export default class App {
-  constructor(el) {
+export class Chat {
+  constructor(el, name) {
     this.el = el;
 
-    collection('chat').then(c => {
+    collection(name).then(c => {
+      console.log('wanna render',name,'?');
       this.collection = c;
       this.render();
     });
@@ -12,18 +13,17 @@ export default class App {
 
   render() {
     this.el.innerHTML = `
-      <h1>Messages</h1>
       <ul>
       </ul>
       <form>
-        <input id="chat">
+        <input class="compose">
         <input type="submit">
       </form>
       `;
 
     let ul = this.el.querySelector('ul');
     let form = this.el.querySelector('form');
-    let input = this.el.querySelector('#chat');
+    let input = this.el.querySelector('.compose');
 
     this.renderList();
     this.collection.onUpdate(()=>this.renderList());
@@ -50,5 +50,26 @@ export default class App {
         li.innerText = time +': '+m.text;
         ul.appendChild(li);
       });
+  }
+}
+
+export default class App {
+  constructor(el) {
+    this.el = el;
+    this.render();
+  }
+
+  render() {
+    this.el.innerHTML = `
+      <h1>Double chat!</h1>
+      <div class="chat-app" id="chat1"></div>
+      <div class="chat-app" id="chat2"></div>
+      `;
+
+    let chats = this.el.querySelectorAll('.chat-app');
+    chats.forEach(el => {
+      console.log(el.id, el);
+      new Chat(el, el.id);
+    });
   }
 }
