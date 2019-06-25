@@ -5,7 +5,9 @@
   "description": "An offline-first, collaborative documents app",
   "main": "index.js",
   "scripts": {
-    "test": "echo \"Error: no test specified\" && exit 1"
+    "build": "rollup app.js -f iife -o public/app.js && rollup sw.js -f iife -o public/sw.js",
+    "start": "npm run build && node server.js",
+    "watch": "open -a 'Google Chrome' 'http://localhost:4000'; tychus 'PORT=3030 npm start' -a 3030 -x public"
   },
   "repository": {
     "type": "git",
@@ -21,5 +23,13 @@
   "bugs": {
     "url": "https://github.com/courajs/recurse-docs/issues"
   },
-  "homepage": "https://github.com/courajs/recurse-docs#readme"
+  "homepage": "https://github.com/courajs/recurse-docs#readme",
+  "devDependencies": {
+    "rollup": "^1.16.2"
+  },
+  "dependencies": {
+    "express": "^4.17.1",
+    "socket.io": "^2.2.0",
+    "sqlite3": "^4.0.9"
+  }
 }
