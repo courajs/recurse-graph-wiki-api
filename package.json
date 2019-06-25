@@ -7,7 +7,7 @@
   "scripts": {
     "build": "rollup -c rollup.config.js",
     "start": "npm run build && node server.js",
-    "watch": "open -a 'Google Chrome' 'http://localhost:4000'; tychus 'PORT=3030 npm start' -a 3030 -x public"
+    "watch": "open -a 'Google Chrome' 'http://localhost:4000'; tychus 'PORT=3030 npm start' -a 3030 -x public,data"
   },
   "repository": {
     "type": "git",

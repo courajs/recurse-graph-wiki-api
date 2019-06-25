@@ -17,7 +17,7 @@ app.get('/doc/:doc_id', function(request, response) {
   response.sendFile(__dirname + '/public/index.html');
 });
 
-var dbFile = './sqlite.db';
+var dbFile = './data/sqlite.db';
 var exists = fs.existsSync(dbFile);
 var db = new sqlite3.Database(dbFile);
 
