@@ -3,6 +3,19 @@ import idb from 'idb';
 import io from 'socket.io';
 import {DB_NAME, DB_VERSION, upgrade} from './lib/db.js';
 
+
+// TODO: actually figure out a good lifecycle.
+// right now we just take everything over, and
+// all pages will refresh in response to the controllerchange
+  self.addEventListener('install', function installEventListenerCallback(event) {
+    console.log('i ent waiting');
+    return self.skipWaiting();
+  });
+  self.addEventListener('activate', function installEventListenerCallback(event) {
+    console.log('im claiming em');
+    return self.clients.claim();
+  });
+
 // events from connected client tabs
 self.handlers = {};
 self.on = function(ev, handler) {
@@ -30,6 +43,21 @@ self.addEventListener('message', function(event) {
     self.handlers[event.data].forEach(h => h(event));
   }
 });
+
+// comms to connected client tabs
+self.broadcast = async function(msg) {
+  let clients = await self.clients.matchAll({type:'window'});
+  clients.forEach(c=>c.postMessage(msg));
+}
+self.broadcastOthers = async function(msg, tab_id) {
+  let clients = await self.clients.matchAll({type:'window'});
+  for (let c of clients) {
+    if (c.id !== tab_id) {
+      c.postMessage('update');
+    }
+  }
+}
+
 
 
 // we want to avoid opening websockets and such for not-yet-active
@@ -151,8 +179,7 @@ self.handleTell = async function(received) {
   }
 
   // notify connected tabs
-  let clients = await self.clients.matchAll({type:'window'});
-  clients.forEach(c=>c.postMessage({kind:'update'}));
+  self.broadcast({kind:'update'});
 };
 
 
@@ -178,24 +205,23 @@ self.pock.then((socket) => {
 
 self.on('update', async function(event) {
   // broadcast to other tabs
-  let clients = await self.clients.matchAll({type:'window'});
-  for (let c of clients) {
-    if (c.id !== event.source.id) {
-      c.postMessage('update');
-    }
-  }
+  self.broadcastOthers('update', event.source.id);
   
   // send update to server
   self.syncOwn();
 });
 
 self.auth = async function(name) {
+  console.log('authing');
   let db = await self.dbp;
   db.transaction('meta','readwrite').objectStore('meta').put(name, 'client_id');
   await fetch('/auth',{method: 'POST', mode:'no-cors',credentials:'include', body:name});
   let socket = await self.pock;
   socket.disconnect();
   socket.connect();
+  console.log('sending authed');
+  await self.broadcast('authed');
+
 }
 
 self.on('auth', self.auth);

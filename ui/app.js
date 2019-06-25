@@ -1,4 +1,9 @@
-import {collection} from '../lib/data-service.js';
+import {
+  collection,
+  isAuthed,
+  whenAuthed,
+  auth,
+} from '../lib/data-service.js';
 
 export class Chat {
   constructor(el, name) {
@@ -57,9 +62,36 @@ export default class App {
   constructor(el) {
     this.el = el;
     this.render();
+    this.state='authing';
   }
 
-  render() {
+  async render() {
+    let authed = await isAuthed();
+    if (!authed) {
+      this.renderAuthPrompt();
+      await whenAuthed;
+    }
+    this.state = 'authed';
+    this.renderChats();
+  }
+
+  renderAuthPrompt() {
+    this.el.innerHTML = `
+      <h1>What's your user id?</h1>
+      <form>
+        <input class="id-entry">
+        <input type="submit">
+      </form>
+      `;
+    let input = this.el.querySelector('.id-entry');
+    let form = this.el.querySelector('form');
+    form.addEventListener('submit', function(e) {
+      e.preventDefault();
+      auth(input.value);
+    });
+  }
+
+  renderChats() {
     this.el.innerHTML = `
       <h1>Double chat!</h1>
       <div class="chat-app" id="chat1"></div>
