@@ -213,6 +213,8 @@ self.pock.then((socket) => {
   });
 });
 
+self.on('ask', self.syncRemote);
+
 self.on('update', async function(event) {
   // broadcast to other tabs
   self.broadcastOthers('update', event.source.id);

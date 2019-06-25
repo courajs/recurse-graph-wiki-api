@@ -10,7 +10,6 @@ export class Chat {
     this.el = el;
 
     collection(name).then(c => {
-      console.log('wanna render',name,'?');
       this.collection = c;
       this.render();
     });
@@ -93,14 +92,12 @@ export default class App {
 
   renderChats() {
     this.el.innerHTML = `
-      <h1>Double chat!</h1>
+      <h1>Chat!</h1>
       <div class="chat-app" id="chat1"></div>
-      <div class="chat-app" id="chat2"></div>
       `;
 
     let chats = this.el.querySelectorAll('.chat-app');
     chats.forEach(el => {
-      console.log(el.id, el);
       new Chat(el, el.id);
     });
   }
