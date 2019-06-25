@@ -59,7 +59,6 @@ self.broadcastOthers = async function(msg, tab_id) {
 }
 
 
-
 // we want to avoid opening websockets and such for not-yet-active
 // service workers. buuuut you can't actually tell from inside the
 // service worker whether you're active or not. you can listen to
@@ -69,22 +68,31 @@ self.broadcastOthers = async function(msg, tab_id) {
 // so, we just ping from every active tab when they first start up,
 // and that will trigger socket initialization in the sw if necessary.
 self.dbp = new Promise(function(resolve) {
-  self.once('init', function() {
-    console.log('init db!!');
-    let db = idb.openDB(DB_NAME, DB_VERSION, {upgrade});
-    self.db = db;
-    resolve(db);
-  });
+  let db = idb.openDB(DB_NAME, DB_VERSION, {upgrade});
+  self.db = db;
+  resolve(db);
 });
-self.pock = new Promise(function(resolve) {
-  self.once('init', function() {
+self.inited = new Promise(function(resolve) {
+  self.once('init', resolve);
+});
+self.authed = new Promise(async function(resolve) {
+  self.resolveAuth = (id) => {
+    self.id = id;
+    resolve();
+  }
+  let db = await self.dbp;
+  let id = await db.get('meta', 'client_id');
+  if (id) {
+    resolveAuth(id);
+  }
+});
+self.pock = Promise.all([self.authed, self.inited])
+  .then(function() {
     console.log('init socket!!');
     let socket = io('http://localhost:3030', {transports:['websocket']});
     self.socket = socket;
-    resolve(socket);
+    return socket;
   });
-});
-self.pid = self.dbp.then((db) => db.get('meta', 'client_id'));
 
 
 self.dbp.catch((e) => console.log("error opening db in service worker!", e));
@@ -101,7 +109,8 @@ self.pock.catch((e) => console.log("error opening socket.io connection in servic
 self.syncOwn = async function() {
   let db = await self.dbp;
   let socket = await self.pock;
-  let client_id = await self.pid;
+  await self.authed;
+  let client_id = self.id;
 
   let tx = db.transaction(['clocks', 'data']);
   let clocks = await tx.objectStore('clocks').getAll();
@@ -154,7 +163,8 @@ self.syncAll = () => Promise.all([self.syncRemote(), self.syncOwn()]);
 // they're responsible for reading from indexeddb themselves
 self.handleTell = async function(received) {
   let db = await self.dbp;
-  let client_id = await self.pid;
+  await self.authed;
+  let client_id = self.id;
 
   let tx = db.transaction(['clocks','data'], 'readwrite');
   let data = tx.objectStore('data');
@@ -216,6 +226,7 @@ self.auth = async function(name) {
   let db = await self.dbp;
   db.transaction('meta','readwrite').objectStore('meta').put(name, 'client_id');
   await fetch('/auth',{method: 'POST', mode:'no-cors',credentials:'include', body:name});
+  resolveAuth(name);
   let socket = await self.pock;
   socket.disconnect();
   socket.connect();
