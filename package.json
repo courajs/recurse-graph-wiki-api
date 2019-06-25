@@ -5,7 +5,7 @@
   "description": "An offline-first, collaborative documents app",
   "main": "index.js",
   "scripts": {
-    "build": "rollup app.js -f iife -o public/app.js && rollup sw.js -f iife -o public/sw.js",
+    "build": "rollup -c rollup.config.js",
     "start": "npm run build && node server.js",
     "watch": "open -a 'Google Chrome' 'http://localhost:4000'; tychus 'PORT=3030 npm start' -a 3030 -x public"
   },
@@ -28,6 +28,7 @@
     "rollup": "^1.16.2"
   },
   "dependencies": {
+    "cookie-parser": "^1.4.4",
     "express": "^4.17.1",
     "socket.io": "^2.2.0",
     "sqlite3": "^4.0.9"
