@@ -7,14 +7,15 @@ export default class Doc {
 
     Promise.all([collection(name), getClientName()]).then(([c, client_name]) => {
       this.collection = c;
-      this.sequence = new Sequence(client_name, c.data);
+      window.sequence = this.sequence = new Sequence(client_name);
+      this.sequence.mergeAtoms(this.collection.data);
       this.render();
     });
   }
 
   render() {
     this.el.innerHTML = `
-      <textarea></textarea>
+      <textarea rows="20" cols="70"></textarea>
     `;
     this.collection.onUpdate(()=>this.updateText());
     this.el.querySelector('textarea').addEventListener('input', (e) => {

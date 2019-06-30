@@ -46,6 +46,7 @@ export default class App {
       <div class="chat-app" id="chat1"></div>
       <div class="chat-app" id="chat2"></div>
       <div class="doc-app" id="doc1"></div>
+      <div class="doc-app" id="doc2"></div>
       `;
 
     let chats = this.el.querySelectorAll('.chat-app');

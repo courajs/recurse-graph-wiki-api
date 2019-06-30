@@ -228,7 +228,7 @@ self.auth = async function(name) {
   console.log('authing');
   let db = await self.dbp;
   db.transaction('meta','readwrite').objectStore('meta').put(name, 'client_id');
-  await fetch('/auth',{method: 'POST', mode:'no-cors',credentials:'include', body:name});
+  await fetch('http://localhost:3030/auth',{method: 'POST', mode:'no-cors',credentials:'include', body:name});
   resolveAuth(name);
   let socket = await self.pock;
   socket.disconnect();

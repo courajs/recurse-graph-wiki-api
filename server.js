@@ -67,6 +67,10 @@ io.on('connection', function(socket){
     console.log('authed', socket.client_id);
   }
 
+  socket.on('disconnect', function() {
+    console.log(socket.client_id, 'disconnected');
+  });
+
   socket.on('ask', function(collections, next) {
     console.log(socket.client_id, 'askin bout', collections);
     let subscriptions = Object.keys(collections);
@@ -86,7 +90,11 @@ io.on('connection', function(socket){
   socket.on('tell', function(data, ack) {
     db.serialize(function() {
       if (data.length === 0) { return; }
-      console.log('heard tell', data);
+      if (data.length < 20) {
+        console.log('heard tell', data);
+      } else {
+        console.log('heard tell', data.slice(0,20), '.....');
+      }
       let records = data.slice();
       while (records.length > 249) {
         insert(records.splice(0,249), socket.client_id);
