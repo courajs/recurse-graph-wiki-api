@@ -33,7 +33,7 @@ export default class Chat {
         time: new Date().valueOf(),
         text: input.value,
       };
-      this.collection.write([message]);
+      this.collection.writeAndUpdate([message]);
       input.value = '';
     });
   }

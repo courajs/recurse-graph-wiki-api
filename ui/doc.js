@@ -20,7 +20,7 @@ export default class Doc {
     this.collection.onUpdate(()=>this.updateText());
     this.el.querySelector('textarea').addEventListener('input', (e) => {
       let fresh = this.sequence.become(e.target.value);
-      this.collection.write(fresh);
+      this.collection.writeAndUpdate(fresh);
     });
     this.updateText();
   }
