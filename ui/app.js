@@ -6,6 +6,7 @@ import {
 
 import Chat from './chat.js';
 import Doc from './doc.js';
+import Graph from './graph.js';
 
 export default class App {
   constructor(el) {
@@ -44,9 +45,8 @@ export default class App {
     this.el.innerHTML = `
       <h1>Chat!</h1>
       <div class="chat-app" id="chat1"></div>
-      <div class="chat-app" id="chat2"></div>
       <div class="doc-app" id="doc1"></div>
-      <div class="doc-app" id="doc2"></div>
+      <div class="graph-app" id="graph1"></div>
       `;
 
     let chats = this.el.querySelectorAll('.chat-app');
@@ -56,6 +56,10 @@ export default class App {
     let docs = this.el.querySelectorAll('.doc-app');
     docs.forEach(el => {
       new Doc(el, el.id);
+    });
+    let graphs = this.el.querySelectorAll('.graph-app');
+    graphs.forEach(el => {
+      new Graph(el, el.id);
     });
   }
 }
