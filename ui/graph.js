@@ -28,7 +28,7 @@ export default class GraphComponent {
     this.collection.onUpdate(()=>this.renderGraph());
 
     this.button.addEventListener('click', (e) => {
-      let atom = this.graph.addPage();
+      let atom = this.graph.addNode();
       this.collection.writeAndUpdate([atom]);
     });
   }
