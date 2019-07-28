@@ -44,11 +44,13 @@ export default class App {
   renderChats() {
     this.el.innerHTML = `
       <h1>Chat!</h1>
+      <div class="other-chat-app"></div>
       <div class="chat-app" id="chat1"></div>
       <div class="doc-app" id="doc1"></div>
       <div class="graph-app" id="graph1"></div>
       `;
 
+    new Chat(this.el.querySelector('.other-chat-app'), ['id','attribute']);
     let chats = this.el.querySelectorAll('.chat-app');
     chats.forEach(el => {
       new Chat(el, el.id);

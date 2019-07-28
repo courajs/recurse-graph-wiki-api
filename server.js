@@ -1,4 +1,5 @@
 var fs = require('fs');
+var canonicalize = require('canonicalize');
 
 var sqlite3 = require('sqlite3').verbose();
 var express = require('express');
@@ -50,7 +51,7 @@ function insertValuesForData(these, client_id) {
 
 function insert(records, client_id, cb) {
   let placeholders = new Array(records.length).fill('(?,?,?,?)').join(',');
-  let each = records.map(d => [d.collection, client_id, d.client_index, JSON.stringify(d.value)]);
+  let each = records.map(d => [canonicalize(d.collection), client_id, d.client_index, JSON.stringify(d.value)]);
   let all = [].concat(...each);
   if (cb) {
     db.run('INSERT OR IGNORE into atoms (collection, client, client_index, value) VALUES ' + placeholders, all, cb);
@@ -72,18 +73,31 @@ io.on('connection', function(socket){
   });
 
   socket.on('ask', function(collections, next) {
+    if (!Array.isArray(collections)) { return; }
     console.log(socket.client_id, 'askin bout', collections);
-    let subscriptions = Object.keys(collections);
+    let subscriptions = collections.map(clock => canonicalize(clock.collection));
     subscriptions.forEach(s => socket.join(s));
 
     let AFTER = new Array(subscriptions.length).fill('(collection = ? AND server_index >= ?)').join(' OR ');
-    let values = Object.entries(collections).reduce((a, b) => a.concat(b), []);
+    let values = collections.map(c => [canonicalize(c.collection), c.from]).reduce((a, b) => a.concat(b), []);
 
     db.all('SELECT collection, server_index, client, client_index, value FROM atoms WHERE client != ? AND ('+AFTER+')', socket.client_id, ...values, function(err, data) {
       if (err) { throw err; }
       console.log(`Found ${data.length} since`, collections);
-      data.forEach(d => d.value = JSON.parse(d.value));
-      socket.emit('tell', data);
+      let results = {};
+      data.forEach(d => {
+        if (!results[d.collection]) {
+          results[d.collection] = [];
+        }
+        results[d.collection].push(d);
+        d.collection = JSON.parse(d.collection);
+        d.value = JSON.parse(d.value);
+      });
+      let updates = [];
+      for (let c in results) {
+        updates.push({collection: JSON.parse(c), values: results[c]});
+      }
+      socket.emit('tell', updates);
     });
   });
 
@@ -104,18 +118,22 @@ io.on('connection', function(socket){
         ack();
         let clock_base = {};
         for (let item of data) {
-          if (clock_base[item.collection]) {
-            clock_base[item.collection] = Math.min(item.client_index, clock_base[item.collection]);
+          let c = canonicalize(item.collection);
+          if (clock_base[c]) {
+            clock_base[c] = Math.min(item.client_index, clock_base[c]);
           } else {
-            clock_base[item.collection] = item.client_index;
+            clock_base[c] = item.client_index;
           }
         }
 
         for (let collection in clock_base) {
           db.all('SELECT server_index, collection, client, client_index, value FROM atoms WHERE client = ? AND collection = ? AND client_index >= ?', socket.client_id, collection, clock_base[collection], function(err, results) {
             if (err) { throw err; }
-            results.forEach(d => d.value = JSON.parse(d.value));
-            socket.in(collection).emit('tell', results);
+            results.forEach(d => {
+              d.collection = JSON.parse(d.collection);
+              d.value = JSON.parse(d.value);
+            });
+            socket.in(collection).emit('tell', [{collection:JSON.parse(collection), values:results}]);
           });
         }
       });
