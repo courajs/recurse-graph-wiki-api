@@ -3,6 +3,7 @@ var canonicalize = require('canonicalize');
 
 var sqlite3 = require('sqlite3').verbose();
 var express = require('express');
+var cors = require('cors');
 var cookie = require('cookie');
 
 var app = express();
@@ -29,9 +30,20 @@ if (!exists) {
   });
 }
 
+var corsOptions = {
+  credentials: true,
+  origin(origin, cb) {
+    if (origin === 'https://graph.recurse.com' || origin === 'https://recurse-graph-api.recurse.com') {
+      cb(null, true);
+    } else {
+      cb(null, false);
+    }
+  }
+};
+
 app.use(require('cookie-parser')());
 app.use(require('body-parser').text());
-app.post('/auth', function(req, res){
+app.post('/auth', cors(corsOptions), function(req, res){
   if (!req.body) {
     console.log('no body in auth request!');
     res.status(400).send('send your id!!');
