@@ -90,12 +90,13 @@ io.on('connection', function(socket){
     let subscriptions = collections.map(clock => canonicalize(clock.collection));
     subscriptions.forEach(s => socket.join(s));
 
-    let AFTER = new Array(subscriptions.length).fill('(collection = ? AND server_index >= ?)').join(' OR ');
+    let AFTER = new Array(subscriptions.length).fill('(collection = ? AND server_index > ?)').join(' OR ');
     let values = collections.map(c => [canonicalize(c.collection), c.from]).reduce((a, b) => a.concat(b), []);
 
     db.all('SELECT collection, server_index, client, client_index, value FROM atoms WHERE client != ? AND ('+AFTER+')', socket.client_id, ...values, function(err, data) {
       if (err) { throw err; }
       console.log(`Found ${data.length} since`, collections);
+      if (data.length === 0) { return; }
       let results = {};
       data.forEach(d => {
         if (!results[d.collection]) {
